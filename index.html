@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Streak · CEO XB Concept Prototype</title>
+
+  <!-- Plus Jakarta Sans, loaded before paint via head link tag -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+
+  <!-- Tailwind CSS via Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 + ReactDOM 18 (production builds) from unpkg -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel Standalone: compiles the JSX in the script block at load time -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+    const { useState } = React;
+
+    /*
+      THE STREAK : concept-test prototype for CEO XB
+      Single-file React Artifact. Mobile-width column on desktop.
+
+      IMPLEMENTATION NOTE
+      The Claude artifact environment ships Tailwind base classes only,
+      no JIT compiler. Arbitrary values like bg-[#0C4C6F] silently fail.
+      So all custom colors, font sizes, letter-spacing, and non-standard
+      dimensions live in inline styles. Layout primitives (flex, padding
+      on the standard scale, rounded-full, min-h-screen) stay in Tailwind.
+
+      TYPE SCALE
+      display-xl  80px / 800 / -0.025em / leading-1   hero numbers
+      h1          28px / 800 / 1.15                   page titles
+      h2          22px / 800 / 1.2                    sheet headings
+      body-l      17px / 500                          primary CTAs
+      body        16px / 400 / 1.5                    default body
+      body-s      15px / 400 / 1.5                    peer rows
+      small       14px / 400-500                      meta, helper
+      label       13px / 700 / +0.08em / uppercase    eyebrows, pills
+
+      CRITICAL CONTRAST PAIRS  (sRGB relative-luminance, WCAG)
+      white on #0C4C6F (primary navy)   approx 8.7:1   AAA normal
+      white on #062C50 (logged navy)    approx 14.2:1  AAA all
+      #5D666F on #FFFFFF (meta text)    approx 5.8:1   AA normal
+      white on #106E9E (accent)         approx 5.4:1   AA normal
+      #3F464C on #EDF2F7 (subtle surf)  approx 9.4:1   AAA all
+    */
+
+    // ─── Inline SVG icons (replacing lucide-react imports) ───
+    // Reconstructed from lucide-react published icon paths (v0.3xx series).
+    // Each component accepts size, color, strokeWidth, fill, className, style.
+
+    function Icon({ size = 24, color = 'currentColor', strokeWidth = 2, fill = 'none', className, style, children }) {
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill={fill}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+          style={style}
+          aria-hidden="true"
+        >
+          {children}
+        </svg>
+      );
+    }
+
+    function HomeIcon(props) {
+      return (
+        <Icon {...props}>
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </Icon>
+      );
+    }
+
+    function BookOpen(props) {
+      return (
+        <Icon {...props}>
+          <path d="M12 7v14" />
+          <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+        </Icon>
+      );
+    }
+
+    function Globe(props) {
+      return (
+        <Icon {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+          <path d="M2 12h20" />
+        </Icon>
+      );
+    }
+
+    function MessageCircle(props) {
+      return (
+        <Icon {...props}>
+          <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+        </Icon>
+      );
+    }
+
+    function User(props) {
+      return (
+        <Icon {...props}>
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </Icon>
+      );
+    }
+
+    function ArrowLeft(props) {
+      return (
+        <Icon {...props}>
+          <path d="m12 19-7-7 7-7" />
+          <path d="M19 12H5" />
+        </Icon>
+      );
+    }
+
+    function X(props) {
+      return (
+        <Icon {...props}>
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </Icon>
+      );
+    }
+
+    function Bell(props) {
+      return (
+        <Icon {...props}>
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </Icon>
+      );
+    }
+
+    // ─── Design tokens ───
+    const T = {
+      navyDeep: '#0A3761',
+      navy: '#0C4C6F',
+      navyDark: '#062C50',
+      accent: '#106E9E',
+      // Primary CTA palette : brighter than the streak card so it earns the eye
+      cta: '#056EA7',
+      ctaHover: '#045A8A',
+      ctaActive: '#034570',
+      atmosA: '#0f1a24',
+      atmosB: '#1a2e3e',
+      white: '#FFFFFF',
+      text: '#000000',
+      textWarm: '#3F464C',
+      textMuted: '#5D666F',
+      surface: '#EDF2F7',
+      surfaceHover: '#dde6ee',
+      border: 'rgba(0,0,0,0.10)',
+      borderMuted: 'rgba(93,102,111,0.5)',
+      danger: '#A32D2D',
+      bgWall: '#cbd5e1',
+    };
+
+    const COHORT = [
+      {
+        name: 'Joachim Becker',
+        initials: 'JB',
+        role: 'CEO',
+        company: 'Xeras Bonus',
+        weeks: 6,
+        move: 'Locked in our CE mark notified body.',
+        logged: true,
+        bg: T.navyDeep,
+      },
+      {
+        name: 'Frida Jensen',
+        initials: 'FJ',
+        role: 'CFO',
+        company: 'United Health',
+        weeks: 4,
+        move: 'Closed our Series B term sheet.',
+        logged: true,
+        bg: T.accent,
+      },
+      {
+        name: 'Marcus Tan',
+        initials: 'MT',
+        role: 'CEO',
+        company: 'Caldera Bio',
+        weeks: 5,
+        move: 'Hired our first U.S. comms lead.',
+        logged: true,
+        bg: T.navyDark,
+      },
+      {
+        name: 'Sofia Ricci',
+        initials: 'SR',
+        role: 'CEO',
+        company: 'Lumen Diagnostics',
+        weeks: 8,
+        move: 'Lined up our FDA pre-submission meeting.',
+        logged: true,
+        bg: T.accent,
+      },
+      {
+        name: 'Anneliese Vogel',
+        initials: 'AV',
+        role: 'CEO',
+        company: 'NordMed Devices',
+        weeks: 3,
+        move: null,
+        logged: false,
+        bg: T.navy,
+      },
+    ];
+
+    function ConceptPrototype() {
+      const [view, setView] = useState('home');
+      const [streak, setStreak] = useState(3);
+      const [logged, setLogged] = useState(false);
+      const [moveText, setMoveText] = useState('');
+      const [submittedMove, setSubmittedMove] = useState('');
+      const [sheetOpen, setSheetOpen] = useState(false);
+
+      const handleSubmit = () => {
+        const trimmed = moveText.trim();
+        if (trimmed.length < 1 || trimmed.length > 140) return;
+        setSubmittedMove(trimmed);
+        setStreak(4);
+        setLogged(true);
+        setView('success');
+      };
+      const handleDone = () => setView('home');
+      const handleCancelLog = () => {
+        setView('home');
+        setMoveText('');
+      };
+
+      return (
+        <div
+          className="min-h-screen flex items-start justify-center"
+          style={{
+            backgroundColor: T.bgWall,
+            fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+          }}
+        >
+          <style>{`
+            @keyframes pjs-slide-up {
+              from { transform: translateY(100%); }
+              to   { transform: translateY(0); }
+            }
+            @keyframes pjs-fade-in {
+              from { opacity: 0; }
+              to   { opacity: 1; }
+            }
+            @keyframes pjs-count-pop {
+              0%   { transform: scale(0.85); opacity: 0; }
+              60%  { transform: scale(1.06); opacity: 1; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            textarea.pjs-textarea::placeholder { color: rgba(93,102,111,0.55); }
+            .pjs-btn-primary:hover:not(:disabled) { background-color: ${T.ctaHover} !important; }
+            .pjs-btn-primary:active:not(:disabled) { background-color: ${T.ctaActive} !important; }
+            .pjs-btn-secondary:hover { background-color: ${T.surfaceHover} !important; }
+            .pjs-link-muted:hover { background-color: ${T.surface} !important; }
+            .pjs-focus:focus-visible { outline: 2px solid ${T.accent}; outline-offset: 2px; }
+          `}</style>
+
+          <div
+            className="w-full min-h-screen relative overflow-hidden"
+            style={{
+              maxWidth: 390,
+              backgroundColor: T.white,
+              boxShadow: '0 0 40px rgba(0,0,0,0.08)',
+            }}
+          >
+            {view === 'home' && (
+              <HomeView
+                streak={streak}
+                logged={logged}
+                submittedMove={submittedMove}
+                onLog={() => setView('log')}
+                onPreview={() => setSheetOpen(true)}
+              />
+            )}
+            {view === 'log' && (
+              <LogView
+                text={moveText}
+                setText={setMoveText}
+                onSubmit={handleSubmit}
+                onCancel={handleCancelLog}
+              />
+            )}
+            {view === 'success' && (
+              <SuccessView
+                streak={streak}
+                move={submittedMove}
+                onPreview={() => setSheetOpen(true)}
+                onDone={handleDone}
+              />
+            )}
+            {sheetOpen && <NotificationSheet onClose={() => setSheetOpen(false)} />}
+          </div>
+        </div>
+      );
+    }
+
+    // SHARED PRIMITIVES ──────────────────────────────────────────────
+
+    function Eyebrow({ children, color = T.textMuted, style }) {
+      return (
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color,
+            margin: 0,
+            ...style,
+          }}
+        >
+          {children}
+        </p>
+      );
+    }
+
+    function Avatar({ initials, bg, size = 44 }) {
+      const fontSize = size < 30 ? 11 : size < 40 ? 13 : 15;
+      return (
+        <div
+          className="rounded-full flex items-center justify-center"
+          style={{
+            backgroundColor: bg,
+            color: T.white,
+            width: size,
+            height: size,
+            fontSize,
+            fontWeight: 800,
+            flexShrink: 0,
+          }}
+          aria-hidden
+        >
+          {initials}
+        </div>
+      );
+    }
+
+    function StatusPill({ logged, weeks }) {
+      const base = {
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderRadius: 9999,
+        padding: '2px 10px',
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: '0.02em',
+        whiteSpace: 'nowrap',
+      };
+      if (logged) {
+        return (
+          <span style={{ ...base, backgroundColor: T.accent, color: T.white }}>
+            {weeks} wk
+          </span>
+        );
+      }
+      return (
+        <span
+          style={{
+            ...base,
+            backgroundColor: 'transparent',
+            border: `1px solid ${T.borderMuted}`,
+            color: T.textMuted,
+          }}
+        >
+          {weeks} wk
+        </span>
+      );
+    }
+
+    function HeaderChrome({ withPeers = true }) {
+      return (
+        <header className="px-5 pt-4 pb-3 flex items-center justify-end" style={{ minHeight: 44 }}>
+          {withPeers && <PeerStackPill />}
+        </header>
+      );
+    }
+
+    function Logo() {
+      return (
+        <div className="flex items-baseline" style={{ letterSpacing: '-0.02em' }} aria-label="CEO XB">
+          <span style={{ fontSize: 20, fontWeight: 800, color: T.navyDeep }}>ceo</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: T.navyDeep, marginLeft: 3 }}>X</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: T.accent }}>B</span>
+        </div>
+      );
+    }
+
+    function PeerStackPill() {
+      const peers = [
+        { initials: 'JB', bg: T.navyDeep },
+        { initials: 'FJ', bg: T.accent },
+        { initials: 'AV', bg: T.navy },
+        { initials: 'MT', bg: T.navyDark },
+      ];
+      return (
+        <div
+          className="flex items-center"
+          style={{
+            backgroundColor: T.surface,
+            borderRadius: 9999,
+            paddingLeft: 4,
+            paddingRight: 12,
+            paddingTop: 4,
+            paddingBottom: 4,
+          }}
+        >
+          <div className="flex" style={{ marginRight: 8 }}>
+            {peers.map((p, i) => (
+              <div
+                key={p.initials}
+                className="rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: p.bg,
+                  color: T.white,
+                  width: 28,
+                  height: 28,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  boxShadow: `0 0 0 2px ${T.white}`,
+                  marginLeft: i === 0 ? 0 : -8,
+                }}
+              >
+                {p.initials}
+              </div>
+            ))}
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 700, color: T.textWarm }}>+4</span>
+        </div>
+      );
+    }
+
+    // HOME VIEW ──────────────────────────────────────────────────────
+
+    function HomeView({ streak, logged, submittedMove, onLog, onPreview }) {
+      return (
+        <div className="flex flex-col min-h-screen" style={{ paddingBottom: 88 }}>
+          <HeaderChrome />
+
+          <div className="px-5 mt-3">
+            <Eyebrow>Tuesday · November 11</Eyebrow>
+            <h1
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.15,
+                color: T.text,
+                margin: '6px 0 0 0',
+              }}
+            >
+              {logged ? 'Logged. You\'re 4 weeks in a row.' : 'Hi Douglas. Time to log your business move this week.'}
+            </h1>
+          </div>
+
+          <section className="px-5" style={{ marginTop: 28 }} aria-labelledby="streak-label">
+            <div style={{ marginBottom: 12 }}>
+              <Eyebrow color={T.accent}>
+                <span id="streak-label">Your weekly streak</span>
+              </Eyebrow>
+            </div>
+            <StreakCard streak={streak} logged={logged} />
+            {logged && submittedMove && (
+              <div
+                style={{
+                  marginTop: 12,
+                  borderRadius: 16,
+                  backgroundColor: T.surface,
+                  borderLeft: `4px solid ${T.accent}`,
+                  padding: '12px 16px',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 15,
+                    color: T.atmosA,
+                    fontWeight: 500,
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}
+                >
+                  "{submittedMove}"
+                </p>
+              </div>
+            )}
+
+            {/* Primary CTA paired with the streak hero */}
+            <div style={{ marginTop: 16 }}>
+              {!logged ? (
+                <button
+                  onClick={onLog}
+                  className="pjs-btn-primary pjs-focus"
+                  style={{
+                    width: '100%',
+                    minHeight: 56,
+                    backgroundColor: T.cta,
+                    color: T.white,
+                    border: 'none',
+                    borderRadius: 9999,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 1px 2px rgba(5,110,167,0.25)',
+                  }}
+                >
+                  Log your weekly business move
+                </button>
+              ) : (
+                <div
+                  aria-live="polite"
+                  style={{
+                    width: '100%',
+                    minHeight: 56,
+                    backgroundColor: T.surface,
+                    color: T.navyDark,
+                    borderRadius: 9999,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  You're logged. Next prompt Tuesday.
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Cohort : visually separated from the action cluster above */}
+          <section className="px-5" style={{ marginTop: 48 }}>
+            <div className="flex items-baseline justify-between" style={{ marginBottom: 20 }}>
+              <Eyebrow>Your cohort's week</Eyebrow>
+              <span style={{ fontSize: 13, fontWeight: 500, color: T.textMuted }}>
+                {logged ? '6 of 8 logged this week' : '5 of 8 logged this week'}
+              </span>
+            </div>
+            <ul
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 28,
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+              }}
+            >
+              {COHORT.map((peer) => (
+                <PeerRow key={peer.name} peer={peer} />
+              ))}
+            </ul>
+          </section>
+
+          <div style={{ flex: 1, minHeight: 32 }} />
+
+          <BottomNav active="home" />
+        </div>
+      );
+    }
+
+    // STREAK CARD ────────────────────────────────────────────────────
+
+    function StreakCard({ streak, logged }) {
+      const totalPills = 4;
+      const filledCount = logged ? 4 : 3;
+
+      return (
+        <div
+          style={{
+            borderRadius: 16,
+            padding: 20,
+            minHeight: 119,
+            backgroundColor: logged ? T.navyDark : T.navy,
+            transition: 'background-color 0.5s ease',
+          }}
+        >
+          <div className="flex items-start justify-between" style={{ gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.7)',
+                  margin: 0,
+                }}
+              >
+                Weeks logged in a row
+              </p>
+              <p
+                key={streak}
+                style={{
+                  fontSize: 80,
+                  fontWeight: 800,
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1,
+                  color: T.white,
+                  marginTop: 6,
+                  marginBottom: 0,
+                  animation: 'pjs-count-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+              >
+                {streak}
+              </p>
+            </div>
+            <div style={{ textAlign: 'right', paddingTop: 4 }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: T.white, margin: 0 }}>
+                {logged ? 'Logged this week' : 'Not logged yet'}
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.6)',
+                  marginTop: 4,
+                  marginBottom: 0,
+                }}
+              >
+                {logged ? 'Next due Tuesday' : 'Due by Sunday'}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="flex"
+            style={{ gap: 6, marginTop: 20 }}
+            aria-label={`${filledCount} of ${totalPills} weeks logged`}
+          >
+            {Array.from({ length: totalPills }).map((_, i) => {
+              const isFilled = i < filledCount;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    height: 8,
+                    borderRadius: 9999,
+                    backgroundColor: isFilled ? T.white : 'transparent',
+                    border: isFilled ? 'none' : '1.5px dashed rgba(255,255,255,0.5)',
+                    transition: 'background-color 0.5s ease, border-color 0.5s ease',
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // PEER ROW ───────────────────────────────────────────────────────
+
+    function PeerRow({ peer }) {
+      return (
+        <li className="flex items-start" style={{ gap: 14 }}>
+          <Avatar initials={peer.initials} bg={peer.bg} size={46} />
+          <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+            <div className="flex items-baseline justify-between" style={{ gap: 8 }}>
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: T.text,
+                  margin: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {peer.name}
+              </p>
+              <StatusPill logged={peer.logged} weeks={peer.weeks} />
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 500, color: T.textMuted, margin: '4px 0 0 0' }}>
+              {peer.role}, {peer.company}
+            </p>
+            {peer.logged ? (
+              <p
+                style={{
+                  fontSize: 15,
+                  color: T.textWarm,
+                  lineHeight: 1.5,
+                  margin: '10px 0 0 0',
+                }}
+              >
+                "{peer.move}"
+              </p>
+            ) : (
+              <p
+                style={{
+                  fontSize: 14,
+                  color: T.textMuted,
+                  fontStyle: 'italic',
+                  lineHeight: 1.5,
+                  margin: '10px 0 0 0',
+                }}
+              >
+                Hasn't logged yet
+              </p>
+            )}
+          </div>
+        </li>
+      );
+    }
+
+    // LOG VIEW ───────────────────────────────────────────────────────
+
+    function LogView({ text, setText, onSubmit, onCancel }) {
+      const [focused, setFocused] = useState(false);
+      const charCount = text.length;
+      const overLimit = charCount > 140;
+      const canSubmit = text.trim().length >= 1 && !overLimit;
+
+      return (
+        <div className="flex flex-col min-h-screen">
+          <header className="px-5 pt-4 pb-3 flex items-center justify-between">
+            <button
+              onClick={onCancel}
+              className="pjs-link-muted pjs-focus"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 8,
+                marginLeft: -8,
+                borderRadius: 9999,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s ease',
+              }}
+              aria-label="Back"
+            >
+              <ArrowLeft size={20} color={T.text} strokeWidth={2.25} />
+            </button>
+            <button
+              onClick={onCancel}
+              className="pjs-focus"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 8px',
+                color: T.textMuted,
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Cancel
+            </button>
+          </header>
+
+          <div className="px-5 mt-4" style={{ flex: 1 }}>
+            <Eyebrow color={T.accent}>Week 4 · Your weekly log</Eyebrow>
+            <h1
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.15,
+                color: T.text,
+                margin: '8px 0 0 0',
+              }}
+            >
+              What did you get done this week?
+            </h1>
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: T.textMuted,
+                lineHeight: 1.5,
+                margin: '8px 0 0 0',
+              }}
+            >
+              One sentence. Your cohort will see it.
+            </p>
+
+            <div
+              style={{
+                marginTop: 24,
+                borderRadius: 16,
+                backgroundColor: T.white,
+                border: focused ? `2px solid ${T.navy}` : `2px solid ${T.border}`,
+                transition: 'border-color 0.2s ease',
+              }}
+            >
+              <textarea
+                className="pjs-textarea"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder="e.g. Booked our first NHS pilot site."
+                rows={5}
+                style={{
+                  width: '100%',
+                  backgroundColor: 'transparent',
+                  padding: 16,
+                  fontSize: 16,
+                  lineHeight: 1.5,
+                  color: T.text,
+                  outline: 'none',
+                  resize: 'none',
+                  border: 'none',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+                autoFocus
+                aria-label="This week's move"
+              />
+              <div
+                className="flex items-center justify-between"
+                style={{ padding: '0 16px 12px', gap: 12 }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 500, color: T.textMuted }}>
+                  Anything that moved your business forward, however small.
+                </span>
+                <span
+                  aria-live="polite"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontVariantNumeric: 'tabular-nums',
+                    color: overLimit ? T.danger : charCount > 120 ? T.textWarm : T.textMuted,
+                  }}
+                >
+                  {charCount}/140
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5" style={{ paddingTop: 24, paddingBottom: 32 }}>
+            <button
+              onClick={onSubmit}
+              disabled={!canSubmit}
+              className="pjs-btn-primary pjs-focus"
+              style={{
+                width: '100%',
+                minHeight: 56,
+                backgroundColor: T.cta,
+                color: T.white,
+                border: 'none',
+                borderRadius: 9999,
+                fontSize: 17,
+                fontWeight: 600,
+                cursor: canSubmit ? 'pointer' : 'not-allowed',
+                opacity: canSubmit ? 1 : 0.6,
+                transition: 'background-color 0.2s ease, opacity 0.2s ease',
+                fontFamily: 'inherit',
+                boxShadow: canSubmit ? '0 1px 2px rgba(5,110,167,0.25)' : 'none',
+              }}
+            >
+              Log this business move
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // SUCCESS VIEW ───────────────────────────────────────────────────
+
+    function SuccessView({ streak, move, onPreview, onDone }) {
+      return (
+        <div className="flex flex-col min-h-screen">
+          <HeaderChrome withPeers={false} />
+
+          <div className="px-5 mt-3" style={{ animation: 'pjs-fade-in 0.35s ease-out' }}>
+            <Eyebrow color={T.accent}>Logged · Tuesday 11:42</Eyebrow>
+            <h1
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.15,
+                color: T.text,
+                margin: '8px 0 0 0',
+              }}
+            >
+              Done. You're 4 weeks in a row.
+            </h1>
+          </div>
+
+          <div className="px-5 mt-6">
+            <StreakCard streak={streak} logged={true} />
+          </div>
+
+          <section className="px-5 mt-6">
+            <div style={{ marginBottom: 8 }}>
+              <Eyebrow>What you logged</Eyebrow>
+            </div>
+            <div
+              style={{
+                borderRadius: 16,
+                backgroundColor: T.surface,
+                borderLeft: `4px solid ${T.accent}`,
+                padding: 16,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 16,
+                  color: T.atmosA,
+                  fontWeight: 500,
+                  lineHeight: 1.5,
+                  margin: 0,
+                }}
+              >
+                "{move}"
+              </p>
+            </div>
+          </section>
+
+          <section className="px-5 mt-7">
+            <div style={{ marginBottom: 12 }}>
+              <Eyebrow>Your cohort's week</Eyebrow>
+            </div>
+            <div className="flex items-center" style={{ gap: 12 }}>
+              <div className="flex" style={{ flexShrink: 0 }}>
+                {[
+                  { i: 'JB', bg: T.navyDeep },
+                  { i: 'FJ', bg: T.accent },
+                  { i: 'DN', bg: T.navy },
+                ].map((p, idx) => (
+                  <div
+                    key={p.i}
+                    className="rounded-full flex items-center justify-center"
+                    style={{
+                      width: 34,
+                      height: 34,
+                      backgroundColor: p.bg,
+                      color: T.white,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      boxShadow: `0 0 0 2px ${T.white}`,
+                      marginLeft: idx === 0 ? 0 : -8,
+                    }}
+                  >
+                    {p.i}
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 14, color: T.textWarm, lineHeight: 1.4, margin: 0 }}>
+                <span style={{ fontWeight: 700, color: T.text }}>You, Joachim and Frida</span>{' '}
+                have logged this week. 6 of 8 in your cohort.
+              </p>
+            </div>
+          </section>
+
+          <div style={{ flex: 1, minHeight: 24 }} />
+
+          <div className="px-5" style={{ paddingTop: 24, paddingBottom: 32 }}>
+            <button
+              onClick={onPreview}
+              className="pjs-btn-secondary pjs-focus"
+              style={{
+                width: '100%',
+                minHeight: 56,
+                backgroundColor: T.surface,
+                color: T.cta,
+                border: 'none',
+                borderRadius: 9999,
+                fontSize: 17,
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'background-color 0.2s ease',
+                fontFamily: 'inherit',
+                marginBottom: 12,
+              }}
+            >
+              <Bell size={18} strokeWidth={2.25} />
+              See your Tuesday reminder
+            </button>
+
+            <button
+              onClick={onDone}
+              className="pjs-btn-primary pjs-focus"
+              style={{
+                width: '100%',
+                minHeight: 56,
+                backgroundColor: T.cta,
+                color: T.white,
+                border: 'none',
+                borderRadius: 9999,
+                fontSize: 17,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                fontFamily: 'inherit',
+                boxShadow: '0 1px 2px rgba(5,110,167,0.25)',
+              }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // NOTIFICATION SHEET (the personality moment) ───────────────────
+
+    function NotificationSheet({ onClose }) {
+      return (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tuesday reminder preview"
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(6, 44, 80, 0.55)',
+            animation: 'pjs-fade-in 0.2s ease-out',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              backgroundColor: T.white,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              overflow: 'hidden',
+              maxHeight: '88%',
+              display: 'flex',
+              flexDirection: 'column',
+              animation: 'pjs-slide-up 0.32s cubic-bezier(0.32, 0.72, 0, 1)',
+            }}
+          >
+            <div style={{ paddingTop: 12, paddingBottom: 4, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 40, height: 4, borderRadius: 9999, backgroundColor: 'rgba(93,102,111,0.3)' }} />
+            </div>
+
+            <div
+              className="px-5"
+              style={{ paddingTop: 12, paddingBottom: 16, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}
+            >
+              <div>
+                <div style={{ marginBottom: 6 }}>
+                  <Eyebrow color={T.accent}>Tuesday morning · 9:00 AM</Eyebrow>
+                </div>
+                <h2
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    lineHeight: 1.2,
+                    color: T.text,
+                    margin: 0,
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  Here's the nudge you'll get
+                  <br />
+                  every Tuesday.
+                </h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="pjs-link-muted pjs-focus"
+                aria-label="Close preview"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 6,
+                  marginRight: -4,
+                  borderRadius: 9999,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={20} color={T.textWarm} strokeWidth={2.25} />
+              </button>
+            </div>
+
+            <div className="px-5" style={{ paddingBottom: 24, flex: 1, minHeight: 0 }}>
+              <div
+                style={{
+                  width: '100%',
+                  aspectRatio: '9 / 15',
+                  borderRadius: 28,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  boxShadow: '0 4px 4px rgba(0,0,0,0.18)',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: `linear-gradient(170deg, ${T.atmosA} 0%, ${T.atmosB} 28%, ${T.navyDeep} 62%, ${T.navyDark} 100%)`,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'radial-gradient(60% 45% at 75% 18%, rgba(16,110,158,0.45) 0%, rgba(16,110,158,0) 70%)',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'radial-gradient(55% 40% at 25% 85%, rgba(16,110,158,0.22) 0%, rgba(16,110,158,0) 65%)',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 28%)',
+                  }}
+                />
+
+                <div
+                  style={{
+                    position: 'relative',
+                    zIndex: 10,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px 20px 0',
+                    color: T.white,
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>9:41</span>
+                  <span style={{ opacity: 0.9, letterSpacing: '0.02em' }}>●●●●● 5G</span>
+                </div>
+
+                <div
+                  style={{
+                    position: 'relative',
+                    zIndex: 10,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    color: T.white,
+                    paddingTop: '7%',
+                  }}
+                >
+                  <p style={{ fontSize: 13, fontWeight: 500, opacity: 0.85, margin: 0 }}>
+                    Tuesday, November 11
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 'clamp(56px, 17vw, 76px)',
+                      fontWeight: 200,
+                      letterSpacing: '-0.04em',
+                      lineHeight: 1,
+                      margin: '6px 0 0 0',
+                    }}
+                  >
+                    9:41
+                  </p>
+                </div>
+
+                <div style={{ position: 'relative', zIndex: 10, margin: '13% 14px 0 14px' }}>
+                  <div
+                    style={{
+                      borderRadius: 16,
+                      padding: '12px 14px',
+                      background: 'rgba(255,255,255,0.94)',
+                      backdropFilter: 'blur(28px) saturate(140%)',
+                      WebkitBackdropFilter: 'blur(28px) saturate(140%)',
+                      boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 8px 24px rgba(0,0,0,0.18)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <div
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 5,
+                          backgroundColor: T.navy,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: T.white,
+                            fontSize: 8,
+                            fontWeight: 800,
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          XB
+                        </span>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          color: T.textWarm,
+                          margin: 0,
+                        }}
+                      >
+                        CEO XB
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 500,
+                          color: T.textMuted,
+                          margin: '0 0 0 auto',
+                        }}
+                      >
+                        now
+                      </p>
+                    </div>
+                    <p
+                      style={{
+                        fontSize: 14.5,
+                        fontWeight: 700,
+                        color: T.text,
+                        lineHeight: 1.3,
+                        margin: '0 0 2px 0',
+                      }}
+                    >
+                      Joachim, Frida and 2 others logged this week.
+                    </p>
+                    <p style={{ fontSize: 14, color: T.textWarm, lineHeight: 1.35, margin: 0 }}>
+                      You've got until Sunday.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 12,
+                    left: 0,
+                    right: 0,
+                    zIndex: 10,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    color: 'rgba(255,255,255,0.65)',
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  <span>swipe up to open</span>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      width: 96,
+                      height: 4,
+                      borderRadius: 9999,
+                      backgroundColor: 'rgba(255,255,255,0.4)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: T.textMuted,
+                  textAlign: 'center',
+                  lineHeight: 1.5,
+                  margin: '16px 0 0 0',
+                }}
+              >
+                Sent 9 AM Tuesday if you haven't logged yet.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // BOTTOM NAV ─────────────────────────────────────────────────────
+
+    function BottomNav({ active }) {
+      const items = [
+        { id: 'home', label: 'Home', Icon: HomeIcon },
+        { id: 'learn', label: 'Learn', Icon: BookOpen },
+        { id: 'connect', label: 'Connect', Icon: Globe },
+        { id: 'discuss', label: 'Discuss', Icon: MessageCircle },
+        { id: 'profile', label: 'Profile', Icon: User },
+      ];
+
+      return (
+        <nav
+          aria-label="Primary navigation"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: T.navyDeep,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-around',
+            padding: '12px 8px 20px',
+            minHeight: 88,
+          }}
+        >
+          {items.map(({ id, label, Icon }) => {
+            const isActive = id === active;
+            const iconColor = isActive ? T.white : 'rgba(255,255,255,0.55)';
+            return (
+              <div
+                key={id}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 8px',
+                }}
+              >
+                <Icon
+                  size={22}
+                  color={iconColor}
+                  fill={isActive ? iconColor : 'none'}
+                  strokeWidth={isActive ? 1.5 : 1.75}
+                />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: isActive ? 700 : 500,
+                    color: iconColor,
+                  }}
+                >
+                  {label}
+                </span>
+                <div
+                  style={{
+                    width: isActive ? 16 : 0,
+                    height: 2,
+                    borderRadius: 9999,
+                    backgroundColor: T.accent,
+                    marginTop: 2,
+                    transition: 'width 0.2s ease',
+                  }}
+                />
+              </div>
+            );
+          })}
+        </nav>
+      );
+    }
+
+    // ─── Mount ───
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ConceptPrototype />);
+  </script>
+</body>
+</html>
